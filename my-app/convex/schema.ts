@@ -17,6 +17,8 @@ export default defineSchema({
       .index("by_email", ["email"])
       .index("by_username", ["username"])
       .searchIndex("search_name",{searchField:"name"})
-      .searchIndex("search_email",{searchField:"email"})
+      .searchIndex("search_email",{searchField:"email"}),
+
+    posts:defineTable
 
 });
