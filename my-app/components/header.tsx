@@ -17,7 +17,7 @@ function Header() {
     const { isLoading, isAuthenticated } = useStoreUserEffect();
     const path = usePathname();
 
-    if(path=="/dashboard"){
+    if(path.includes("/dashboard")){
         return null;
     }
   return (
