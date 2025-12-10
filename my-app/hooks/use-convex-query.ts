@@ -1,38 +1,21 @@
+"use client"
+
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useMutation } from "convex/react";
 
-export const useConvexQuery=<T>(query:any,...args:any)=>{
-    const  result =useQuery(query,...args)
-    const [data,setData]=useState<T | undefined>(undefined);
-    const  [isLoading  , setIsLoading]=useState(true);  
-    const [error , setError]=useState<any | null>(null)
+export const useConvexQuery = (query:any, ...args:any) => {
+  const result = useQuery(query, ...args);
 
-    // Use effect to handle the state changes based on the query result
-    useEffect(()=>{
-        if(result ==undefined){
-            setIsLoading(true);
-        }
-        else{
-            try{
-                setData(result);
-                setError(null);
-            }
-            catch(err:any){
-                 setError(err);
-                 toast.error(err.message)
-            }finally{
-                setIsLoading(false);
-            }
-        }
+  return {
+    data: result ?? null,
+    isLoading: result === undefined,
+    error: null,
+  };
+};
 
-    },[result])
-
-    return  {data,isLoading,error}
-
-}
 
 export const useConvexMutation=(mutation:any)=>{
     const mutationFn=useMutation(mutation);

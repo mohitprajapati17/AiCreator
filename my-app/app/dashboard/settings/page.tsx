@@ -12,15 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Loader2, User } from 'lucide-react';
 import { useConvexMutation } from "@/hooks/use-convex-query"
 
-type User = {
-  _id: string;
-  name: string;
-  username: string;
-  imageUrl: string;
-};
+
 function SettingsPage() {
   const [username,setUsername]=useState("");
-  const {data:currentUser,isLoading}  =useConvexQuery<User>(api.users.getCurrentUser)
+  const {data:currentUser,isLoading}  =useConvexQuery(api.users.getCurrentUser)
 
   const {mutate:updateUsername ,isLoading:isSubmitting}=useConvexMutation(api.users.updateUsername)
 

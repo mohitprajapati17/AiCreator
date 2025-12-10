@@ -12,7 +12,9 @@ import { X } from 'lucide-react';
 import { Settings } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { Menu } from 'lucide-react';
-
+import { useConvexQuery } from '@/hooks/use-convex-query';
+import { api } from '@/convex/_generated/api';
+import { Badge } from '@/components/ui/badge';
 
 const sidebarItems = [
   {
@@ -42,6 +44,9 @@ function layout({children}:any) {
     const pathname = usePathname()
 
     const toggleSideBar=()=>{setIsSideBarOpen(!isSideBarOpen)}
+
+    // Get draft info for badge
+  const { data: draftPost } = useConvexQuery(api.post.getUserDraft);
 
 
 
@@ -119,7 +124,7 @@ function layout({children}:any) {
                   />
                   <span className="font-medium">{item.title}</span>
 
-                  {/* Badge for Create Post if draft exists
+                  {/* Badge for Create Post if draft exists */}
                   {item.title === "Create Post" && draftPost && (
                     <Badge
                       variant="secondary"
@@ -127,7 +132,7 @@ function layout({children}:any) {
                     >
                       Draft
                     </Badge>
-                  )} */}
+                  )}
                 </div>
               </Link>
             );

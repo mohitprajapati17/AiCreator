@@ -162,14 +162,12 @@ export const getUserDraft = query({
     }
 
     // Get user from database
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("tokenIdentifier"), identity.tokenIdentifier))
-      .unique();
-
-    if (!user) {
-      return null;
+   const user=await ctx.db.query("users").withIndex("by_token",(q)=>(q.eq("tokenIdentifier",identity.tokenIdentifier))).unique();
+    if(!user){
+        throw new Error("User not found");
     }
+
+    
 
     const draft = await ctx.db
       .query("posts")
