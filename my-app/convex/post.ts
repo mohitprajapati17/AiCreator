@@ -226,3 +226,16 @@ export const getUserPosts = query({
     }));
   },
 });
+
+
+
+// Get a single post by ID
+export const getById = query({
+  args: { id: v.id("posts") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+
+
