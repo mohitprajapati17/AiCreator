@@ -239,3 +239,37 @@ export const getById = query({
 
 
 
+// Delete a post
+export const deletePost = mutation({
+  args: { id: v.id("posts") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get user from database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("tokenIdentifier"), identity.tokenIdentifier))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the post
+    const post = await ctx.db.get(args.id);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    // Check if user owns the post
+    if (post.authorId !== user._id) {
+      throw new Error("Not authorized to delete this post");
+    }
+
+    await ctx.db.delete(args.id);
+    return { success: true };
+  },
+});
