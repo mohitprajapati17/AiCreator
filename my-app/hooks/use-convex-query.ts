@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { useMutation } from "convex/react";
 
-export const useConvexQuery=(query:any,...args:any)=>{
+export const useConvexQuery=<T>(query:any,...args:any)=>{
     const  result =useQuery(query,...args)
-    const [data,setData]=useState(undefined);
+    const [data,setData]=useState<T | undefined>(undefined);
     const  [isLoading  , setIsLoading]=useState(true);  
     const [error , setError]=useState<any | null>(null)
 
