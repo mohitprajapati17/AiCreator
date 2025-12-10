@@ -83,3 +83,70 @@ export const create=mutation({
     }
 
 })
+
+export  const update=mutation({
+    args:{
+        id: v.id("posts"),
+    title: v.optional(v.string()),
+    content: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("draft"), v.literal("published"))),
+    tags: v.optional(v.array(v.string())),
+    category: v.optional(v.string()),
+    featuredImage: v.optional(v.string()),
+    scheduledFor: v.optional(v.number()),
+    },
+    handler:async(ctx,args)=>{
+
+        const  identity=await ctx.auth.getUserIdentity();
+        if(!identity){
+            throw new Error("User not authenticated");
+        }
+
+        const user=await ctx.db.query("users").withIndex("by_token",(q)=>(q.eq("tokenIdentifier",identity.tokenIdentifier))).unique();
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        // Get the post
+    const post = await ctx.db.get(args.id);
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    if(post.authorId!==user._id){
+        throw new Error("Unauthorized to update this posts");
+    }
+
+    const now=Date.now();
+    const updateData:Record<string, any>={
+        updatedAt:now,
+
+    }
+
+
+
+    // Add provided fields to update
+    if (args.title !== undefined) updateData.title = args.title;
+    if (args.content !== undefined) updateData.content = args.content;
+    if (args.tags !== undefined) updateData.tags = args.tags;
+    if (args.category !== undefined) updateData.category = args.category;
+    if (args.featuredImage !== undefined)
+      updateData.featuredImage = args.featuredImage;
+    if (args.scheduledFor !== undefined)
+      updateData.scheduledFor = args.scheduledFor;
+
+    // Handle status change
+    if (args.status !== undefined) {
+      updateData.status = args.status;
+
+      // If publishing for the first time
+      if (args.status === "published" && post.status === "draft") {
+        updateData.publishedAt = now;
+      }
+    }
+
+    await ctx.db.patch(args.id, updateData);
+    return args.id;
+
+    }
+})
