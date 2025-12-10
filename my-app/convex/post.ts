@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { query } from "./_generated/server";
 // create a Post 
 export const create=mutation({
     args:{
@@ -150,3 +151,37 @@ export  const update=mutation({
 
     }
 })
+
+
+// Get user's draft (there should only be one)
+export const getUserDraft = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    // Get user from database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("tokenIdentifier"), identity.tokenIdentifier))
+      .unique();
+
+    if (!user) {
+      return null;
+    }
+
+    const draft = await ctx.db
+      .query("posts")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("authorId"), user._id),
+          q.eq(q.field("status"), "draft")
+        )
+      )
+      .unique();
+
+    return draft;
+  },
+});
+
