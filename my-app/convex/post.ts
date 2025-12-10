@@ -185,3 +185,44 @@ export const getUserDraft = query({
   },
 });
 
+
+
+// Get user's posts
+export const getUserPosts = query({
+  args: {
+    status: v.optional(v.union(v.literal("draft"), v.literal("published"))),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    // Get user from database
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("tokenIdentifier"), identity.tokenIdentifier))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    let query = ctx.db
+      .query("posts")
+      .filter((q) => q.eq(q.field("authorId"), user._id));
+
+    // Filter by status if provided
+    if (args.status) {
+      query = query.filter((q) => q.eq(q.field("status"), args.status));
+    }
+
+    const posts = await query.order("desc").collect();
+
+    // Add username to each post
+    return posts.map((post) => ({
+      ...post,
+      username: user.username,
+    }));
+  },
+});
