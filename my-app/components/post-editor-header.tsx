@@ -45,6 +45,7 @@ export default function  PostEditorHeader({mode,
                         </Badge>
 
                     )}
+                    </div>
 
                     {/* {Right} */}
 
@@ -137,7 +138,7 @@ export default function  PostEditorHeader({mode,
 
                 </div>
 
-            </div>
+            
 
 
         </header>
