@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { api } from '@/convex/_generated/api'
 import { useRouter } from 'next/navigation'
 import PostEditorHeader from './post-editor-header'
+import PostEditorContent from './PostEditorContent'
 
 const postSchema= z.object({
     title:z.string().min(3,{message:"Title must be at least 3 characters long"}).max(100,{message:"Title must be at most 100 characters long"}),
@@ -21,6 +22,7 @@ function PostEditor({initialData =null  ,mode="create"}:{initialData:any,mode:st
     const [isSettingsOpen,setIsSettingsOpen]=useState(false)
     const [isImageModalOpen,setIsImageModalOpen]=useState(false)
     const [imageModalType,setImageModalType]=useState("featured")
+    const [quillRef,setQuillRef]=useState<HTMLDivElement | null>(null)
 
     const {mutate:createPost,isLoading :isCreateLoading}=useConvexMutation(api.post.create)
     const {mutate:updatePost,isLoading :isUpdateLoading}=useConvexMutation(api.post.update)
@@ -42,7 +44,7 @@ function PostEditor({initialData =null  ,mode="create"}:{initialData:any,mode:st
     const handleSave=()=>{};
     const handlePublish=()=>{};
     const handleSchedule=()=>{};
-    
+
   return (
     <div  className ="min-h-screen  bg-slate-900 text-white">
         {/* {Header} */}
@@ -57,6 +59,14 @@ function PostEditor({initialData =null  ,mode="create"}:{initialData:any,mode:st
         onBack={()=>router.push("/dashboard")}
         />
         {/* editor */}
+        <PostEditorContent
+         form={form}
+         setQuillRef={setQuillRef}
+         onImageUpload={(type:string)=>{
+            setImageModalType(type);
+            setIsImageModalOpen(true);
+         }}
+        />
         {/* settings dialog */}
         {/* image upload  dialog */}
 
