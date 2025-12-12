@@ -80,6 +80,28 @@ function PostEditorContent({form,setQuillRef,onImageUpload}:any) {
   const hasTitle=watchValues.title?.trim();
   const hasContent =watchValues.content&&watchValues.content!=="<p><br></p>"
 
+  const handleAI=async(type:string,  improvementType=null){
+        const {title,content , category,tags} =watchValues;
+
+        if(type=="generate"){
+          if(!title.trim()){
+            return toast.error("please add a title before adding a content");
+          }
+
+          if(content&&content!="<p><br></p>"){
+            window.confirm("this will remove your  entire content");
+          }
+
+          try {
+            
+          } catch (error) {
+            
+          }
+        }
+
+
+  }
+
   return (
     <>
     <main>
