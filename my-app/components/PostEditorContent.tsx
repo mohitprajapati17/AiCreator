@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { BarLoader } from "react-spinners";
 import { minLength } from "zod";
+import { generateBlogContent, improveContent } from "@/app/actions/gemini";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
@@ -80,7 +81,7 @@ function PostEditorContent({form,setQuillRef,onImageUpload}:any) {
   const hasTitle=watchValues.title?.trim();
   const hasContent =watchValues.content&&watchValues.content!=="<p><br></p>"
 
-  const handleAI=async(type:string,  improvementType=null){
+  const handleAI=async(type:string,  improvementType:string|null)=>{
         const {title,content , category,tags} =watchValues;
 
         if(type=="generate"){
@@ -88,36 +89,171 @@ function PostEditorContent({form,setQuillRef,onImageUpload}:any) {
             return toast.error("please add a title before adding a content");
           }
 
-          if(content&&content!="<p><br></p>"){
-            window.confirm("this will remove your  entire content");
+          if(content&&content!="<p><br></p>"&&window.confirm("this will remove your  entire content")){
+            return;
+            
           }
 
-          try {
-            
-          } catch (error) {
+          setIsGenerating(true);
+
+        }
+        else{
+          if(!content||content==="<p><br></p>"){
+            return toast.error("please add some content before improving it");
             
           }
+          setIsImproving(true);
         }
+
+        try{
+          const result =type==="generate"?
+          await generateBlogContent(title,category,tags||[]):
+          await improveContent(content,improvementType);
+
+          if(result.success){
+            setValue("content",result.content);
+
+            toast.success(`Content ${type === "generate" ? "generated" : improvementType + "d"} successfully!`);
+
+          }
+          else{
+            toast.error(result.error);
+          }
+        }
+        catch(error:any){
+          toast.error(`Failed to ${type} content. Please try again.`);
+
+        }
+        finally {
+        type === "generate" ? setIsGenerating(false) : setIsImproving(false);
+    }
 
 
   }
 
   return (
     <>
-    <main>
-        <div>
+    <main className ="max-w-7xl mx-auto px-6 py-8">
+        <div className ="space-y-6">
             {/* {featured  image} */}
+
+                {watchValues.featuredImage ? (
+                <div className="relative group">
+                  <img
+                    src={watchValues.featuredImage}
+                    alt="Featured"
+                    className="w-full h-80 object-cover rounded-xl"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center space-x-3">
+                    <Button
+                      onClick={() => onImageUpload("featured")}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Change Image
+                    </Button>
+                    <Button
+                      onClick={() => setValue("featuredImage", "")}
+                      variant="destructive"
+                      size="sm"
+                    >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                <button
+                  onClick={() => onImageUpload("featured")}
+                  className="w-full h-36 border-2 border-dashed border-slate-600 rounded-xl flex flex-col items-center justify-center space-y-4 hover:border-slate-500 transition-colors group"
+                >
+                  <ImageIcon className="h-12 w-12 text-slate-400 group-hover:text-slate-300" />
+                  <div className="text-center">
+                    <p className="text-slate-300 text-lg font-medium">
+                      Add a featured image
+                    </p>
+                    <p className="text-slate-500 text-sm mt-1">
+                      Upload and transform with AI
+                    </p>
+                  </div>
+                </button>
+          )}
+
+
             {/* title */}
+
+                <div>
+                <Input
+                  {...register("title")}
+                  placeholder="Post title..."
+                  className="border-0 text-4xl font-bold bg-transparent placeholder:text-slate-500 text-white p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                  style={{ fontSize: "2.5rem", lineHeight: "1.2" }}
+                />
+                {errors.title && (
+                  <p className="text-red-400 mt-2">{errors.title.message}</p>
+                )}
+               </div>
+
+
+               {/* Ai tools  */}
+                <div>
+            {!hasContent ? (
+              <Button
+                onClick={() => handleAI("generate",null)}
+                disabled={!hasTitle || isGenerating || isImproving}
+                variant="outline"
+                size="sm"
+                className="border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white disabled:opacity-50 w-full"
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Generate Content with AI
+              </Button>
+            ) : (
+              <div className="grid grid-cols-3 w-full gap-2">
+                {[
+                  { type: "enhance", icon: Sparkles, color: "green" },
+                  { type: "expand", icon: Plus, color: "blue" },
+                  { type: "simplify", icon: Minus, color: "orange" },
+                ].map(({ type, icon: Icon, color }) => (
+                  <Button
+                    key={type}
+                    onClick={() => handleAI("improve", type)}
+                    disabled={isGenerating || isImproving}
+                    variant="outline"
+                    size="sm"
+                    className={`border-${color}-500 text-${color}-400 hover:bg-${color}-500 hover:text-white disabled:opacity-50`}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    AI {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            )}
+            {!hasTitle && (
+              <p className="text-xs text-slate-400 w-full pt-2">
+                Add a title to enable AI content generation
+              </p>
+            )}
+          </div>
+
+          {(isGenerating || isImproving) && (
+            <BarLoader width={"95%"} color="#D8B4FE" />
+          )}
             {/* editor */}
             <div>
+
                 <QuillWrapper
                 ref={setQuillRef}
                 theme="snow"
                 modules={getQuillModules()}
+                value={watchValues.content}
+                onChange={(content:string) => setValue("content", content)}
                 formats={quillConfig.formats}
                 style={{minHeight:"100px",fontSize:"1.125rem",lineHeight:"1.7"}}
                 placeholder="Write something awesome..."
                 />
+                {errors.content && (
+              <p className="text-red-400 mt-2">{errors.content.message}</p>
+            )}
             </div>
             <style jsx global>{`
         .ql-editor {

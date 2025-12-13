@@ -1,14 +1,21 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-const genAI=new GoogleGenerativeAI(process.env.GOOGLE_API_KEY as string);
+"use server"
+
+
+import { GoogleGenAI } from "@google/genai";
+
+// The client gets the API key from the environment variable `GEMINI_API_KEY`.
+const ai = new GoogleGenAI({});
+
+
+
 
 export  async function generateBlogContent(title:string,category="",tags:string[]){
-       
+       console.log("KEY EXISTS:", !!process.env.GEMINI_API_KEY);
+
     try{
         if(!title||title.trim().length===0){
             throw new Error("Title is required to  generate content");
         }
-
-        const model=genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         //   // Create a detailed prompt for blog content generation
 
@@ -34,8 +41,15 @@ export  async function generateBlogContent(title:string,category="",tags:string[
             Start directly with the introduction paragraph.
             `;
 
-            const result =await  model.generateContent(prompt)
-            const content=await result.response.text();
+            const response=await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+            });
+            const content=response.text;
+
+            
+            // const result =await  model.generateContent(prompt)
+            // const content=await result.response.text();
 
             // Basic validation
             if (!content || content.trim().length < 100) {
@@ -76,13 +90,13 @@ export  async function generateBlogContent(title:string,category="",tags:string[
 
 export async function improveContent(
     currentContent:string,
-    improvementType="enhance"
+    improvementType:string|null="enhance"
 ){
     try{
         if(!currentContent ||currentContent.trim().length===0){
             throw new  Error("Content is required for improvement");
         }
-        const model=genAI.getGenerativeModel({model:"gemini-1.5-flash"})
+        
 
         let prompt="";
 
@@ -133,12 +147,16 @@ export async function improveContent(
             `;
         }
 
-        const result =await model.generateContent(prompt);
-        const  content =await  result.response.text();
+        const response=await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+            });
+        const content=response.text;
+
 
         return {
             success:true,
-            content:content.trim(),
+            content:content?.trim(),
         }
     }
     catch (error:any) {
