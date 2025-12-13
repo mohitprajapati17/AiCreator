@@ -9,6 +9,7 @@ import { api } from '@/convex/_generated/api'
 import { useRouter } from 'next/navigation'
 import PostEditorHeader from './post-editor-header'
 import PostEditorContent from './PostEditorContent'
+import PostEditorSettings from './PostEditorSettings'
 
 const postSchema= z.object({
     title:z.string().min(3,{message:"Title must be at least 3 characters long"}).max(100,{message:"Title must be at most 100 characters long"}),
@@ -68,6 +69,14 @@ function PostEditor({initialData =null  ,mode="create"}:{initialData:any,mode:st
          }}
         />
         {/* settings dialog */}
+        <PostEditorSettings
+        isOpen={isSettingsOpen}
+        onClose={()=>setIsSettingsOpen(false)}
+        form={form}
+        mode={mode}
+
+        />
+
         {/* image upload  dialog */}
 
     </div>
