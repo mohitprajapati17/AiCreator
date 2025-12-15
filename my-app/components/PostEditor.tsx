@@ -189,10 +189,13 @@ function PostEditor({initialData =null  ,mode="create"}:{initialData:any,mode:st
         {/* image upload  dialog */}
         <ImageUploadModal
         isOpen={isImageModalOpen}
-        onClose={()=>setIsImageModalOpen(false)}
-        
+        onClose={() => setIsImageModalOpen(false)}
         onImageSelect={handleImageSelect}
-        // title={imageModalType==="featured"?"upload Featured Image":"Insert Image"}
+        title={
+          imageModalType === "featured"
+            ? "Upload Featured Image"
+            : "Insert Image"
+        }
         />
 
     </div>
