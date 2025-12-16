@@ -7,7 +7,10 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-
+import { useDropzone } from 'react-dropzone'
+import { Upload } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 const transformationSchema = z.object({
   aspectRatio: z.string().default("original"),
@@ -76,6 +79,30 @@ function ImageUploadModal( {isOpen , onClose ,  onImageSelect , title}:{isOpen:b
   });
 
   const {watch ,reset ,setValue}=form;
+const onDrop =async(accetedFiles:File[])=>{
+  const file =accetedFiles[0];
+  if(!file) return
+
+  if(!file.type.startsWith("image/")){
+    toast.error("Please upload an image file")
+    return;
+  }
+  if(file.size>10*1024*1024){
+    toast.error("File size should be less than 10mb")
+    return;
+  }
+  setIsUploading(true);
+}
+  const {getRootProps , getInputProps , isDragActive}=useDropzone({
+    onDrop,
+    accept:{
+      "image/*" :[".jpeg",".jpg",".png",".webp" ,".gif"],
+
+    },
+    multiple :false,
+
+
+  })
 
   const watchedValues=watch();
 
@@ -100,8 +127,37 @@ function ImageUploadModal( {isOpen , onClose ,  onImageSelect , title}:{isOpen:b
       <TabsTrigger value="Upload">upload</TabsTrigger>
       <TabsTrigger value="Transform" disabled={!uploadedImage}>transform</TabsTrigger>
     </TabsList>
-    <TabsContent value="Upload" className ="space-y-4">upload</TabsContent>
-    <TabsContent value="Transform" className ="space-y-6">transform</TabsContent>
+    <TabsContent value="Upload" className ="space-y-4">
+      <div {...getRootProps()} className ="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors">
+         <input {...getInputProps()}/>
+
+        {isUploading?(
+          <div className ="space-y-4">
+            <Loader2 className ="h-12 w-12 mx-auto  text-slate-400 animated-spin text-purple-400"/>
+            <p className ="text-slate-300"> Uploading Image...</p>
+          </div>
+        ):(
+           <div className ="space-y-4">
+            <Upload className ="h-12 w-12 mx-auto  text-slate-400"/>
+            <div>
+              <p className ="text-lg text-white">
+                {isDragActive ? "Drop the image here" :"Drag and drop your image here or click to upload"}
+
+              </p>
+              <p className ="text-sm text-slate-400 mt-2">
+                or Click to  send a file (JPG , PNG, WebP ,GIF -Max 10mb)
+
+              </p>
+            </div>
+
+         </div>
+        )}
+      </div>
+      
+      </TabsContent>
+    <TabsContent value="Transform" className ="space-y-6">
+      transform
+      </TabsContent>
   </Tabs>
   </DialogContent>
 </Dialog>
