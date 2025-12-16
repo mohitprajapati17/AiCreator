@@ -30,6 +30,7 @@
     "quill": "^2.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.68.0",
     "react-quill-new": "^3.6.0",
     "react-spinner": "^0.2.7",
