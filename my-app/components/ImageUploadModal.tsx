@@ -8,9 +8,15 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useDropzone } from 'react-dropzone'
-import { Upload } from 'lucide-react'
-import { Loader2 } from 'lucide-react'
+import { Upload, Loader2, Check, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { uploadToImageKit } from "../lib/imageKit"
+import { useCallback } from 'react'
+import { Files } from '@google/genai'
+import { ImageIcon } from 'lucide-react'
+
 
 const transformationSchema = z.object({
   aspectRatio: z.string().default("original"),
@@ -56,11 +62,11 @@ const TEXT_POSITIONS = [
 
 function ImageUploadModal( {isOpen , onClose ,  onImageSelect , title}:{isOpen:boolean , onClose:()=>void , onImageSelect:(imageData:any)=>void , title:string}) {
 
-  const [activeTabs, setActiveTabs]=useState("upload")
-  const [uploadedImage, setUploadedImage]=useState<string | null>(null)
+  const [activeTabs, setActiveTab]=useState("upload")
+  const [uploadedImage, setUploadedImage]=useState<{url:string, width:string, height:string, size:string , fileId?:string , name?:string}|null>(null)
   const [isUploading , setIsUploading ]=useState(false)
   const  [isTransforming  , setIsTransforming]=useState(false);
-  const  [transformedImage , setIsTransformedImage]=useState(false);
+  const  [transformedImage , setTransformedImage]=useState<string|null>(null);
 
    const form = useForm({
     resolver: zodResolver(transformationSchema),
@@ -79,8 +85,10 @@ function ImageUploadModal( {isOpen , onClose ,  onImageSelect , title}:{isOpen:b
   });
 
   const {watch ,reset ,setValue}=form;
-const onDrop =async(accetedFiles:File[])=>{
-  const file =accetedFiles[0];
+
+// Handle file upload
+  const onDrop = useCallback(async (acceptedFiles:File[])=>{
+  const file =acceptedFiles[0];
   if(!file) return
 
   if(!file.type.startsWith("image/")){
@@ -92,7 +100,33 @@ const onDrop =async(accetedFiles:File[])=>{
     return;
   }
   setIsUploading(true);
-}
+
+  try{
+    const fileName = `post-image-${Date.now()}-${file.name}`;
+    const  result =await uploadToImageKit(file, fileName);
+
+    if (result.success && result.data) {
+        setUploadedImage({
+          url: result.data.url.toString(),
+          width: result.data.width.toString(),
+          height: result.data.height.toString(),
+          size: result.data.size.toString()
+        });
+        setTransformedImage(result.data.url.toString());
+        setActiveTab("transform");
+        toast.success("Image uploaded successfully!");
+      } else {
+        toast.error(result.error || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  }, []);
+
+
   const {getRootProps , getInputProps , isDragActive}=useDropzone({
     onDrop,
     accept:{
@@ -106,8 +140,34 @@ const onDrop =async(accetedFiles:File[])=>{
 
   const watchedValues=watch();
 
+
+  // Reset form
+  const resetForm = () => {
+    setUploadedImage(null);
+    setTransformedImage(null);
+    setActiveTab("upload");
+    reset();
+  };
+
+  const handleSelectImage=()=>{
+    if(transformedImage){
+      onImageSelect({
+        url:transformedImage,
+        originalUrl:uploadedImage?.url,
+        fileId: uploadedImage?.fileId,
+        name: uploadedImage?.name,
+        width: uploadedImage?.width,
+        height: uploadedImage?.height,
+      })
+       onClose();
+      resetForm();
+    }
+  }
+
+
     const handleClose=()=>{
       onClose();
+      resetForm();
     }
 
 
@@ -153,10 +213,99 @@ const onDrop =async(accetedFiles:File[])=>{
          </div>
         )}
       </div>
+
+
+            {uploadedImage && (
+              <div className="text-center space-y-4">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-500/20 text-green-300 border-green-500/30"
+                >
+                  <Check className="h-3 w-3 mr-1" />
+                  Image uploaded successfully!
+                </Badge>
+                <div className="text-sm text-slate-400">
+                  {uploadedImage.width} × {uploadedImage.height} •{" "}
+                  {Math.round(parseInt(uploadedImage.size) / 1024)}KB
+                </div>
+                <Button
+                  onClick={() => setActiveTab("transform")}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Start Transforming
+                </Button>
+              </div>
+            )}
       
       </TabsContent>
     <TabsContent value="Transform" className ="space-y-6">
-      transform
+      <div className ="grid lg:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto">
+        <div className ="space-y-6"> 
+          </div>
+
+          {/* {image preview } */}
+          <div className ="space-y-4">
+            <h3 className ="text-lg font-semibold text-white flex items-center ">
+                 <ImageIcon className="h-5 w-5 mr-2" />
+                  Preview
+            </h3>
+
+            {transformedImage&&(
+              <div className ="relative">
+                <div className ="bg-slate-800/50 rounded-lg p-4 border border-slate-700"> 
+                   <img src={transformedImage} alt="Tranformed preview" 
+                   className="w-full h-auto max-h-96 object-contain rounded-lg mx-auto"
+                   onError={() => {
+                          toast.error("Failed to load transformed image");
+                          setTransformedImage(uploadedImage?.url ?? null);
+                        }}/>
+                   
+                   </div>
+
+                   {isTransforming&&(
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                      <div className="bg-slate-800 rounded-lg p-4 flex items-center space-x-3">
+                          <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                          <span className="text-white">
+                            Applying transformations...
+                          </span>
+                      </div>
+                    </div>
+                   )}
+              </div>
+            )}
+
+            {uploadedImage&&transformedImage&&(
+              <div className ="text-center space-y-4">
+                <div className ="text-sm  text-slate-400">
+                  Current image URL ready for use
+                </div>
+                <div className ="flex gap-3 justify-center">
+                  <Button
+                  onClick ={handleSelectImage}
+                  className ="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                        Use This Image
+
+                  </Button>
+
+                  <Button
+                        onClick={handleClose}
+                        variant="outline"
+                        className="border-slate-600 hover:bg-slate-700"
+                      >
+                        Cancel
+                      </Button>
+                  </div>
+
+              </div>
+            )}
+          </div>
+        
+         
+      </div>
       </TabsContent>
   </Tabs>
   </DialogContent>
