@@ -1,3 +1,5 @@
+"use server"
+
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { query } from "./_generated/server";
