@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'lucide-react';
+import Link from "next/link";
 import Image from 'next/image';
 import { CardContent } from '@/components/ui/card';
 
@@ -28,13 +28,21 @@ import { formatDistanceToNow } from 'date-fns';
 
 
 function PostCard({
-    post,
+   post,
   showActions = false,
   showAuthor = true,
   onEdit,
   onDelete,
   onDuplicate,
   className = "",
+}:{
+    post: any;
+    showActions?: boolean;
+    showAuthor?: boolean;
+    onEdit?: (post: any) => void;
+    onDelete?: (postId: string) => void;
+    onDuplicate?: (post: any) => void;
+    className?: string;
 }) {
 
      // Get status badge configuration
@@ -97,6 +105,7 @@ function PostCard({
                 className="object-cover hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
+
             </div>
           </Link>
 
