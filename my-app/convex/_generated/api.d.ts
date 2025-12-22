@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as follow from "../follow.js";
 import type * as post from "../post.js";
+import type * as public_ from "../public.js";
 import type * as users from "../users.js";
 
 import type {
@@ -18,7 +20,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  follow: typeof follow;
   post: typeof post;
+  public: typeof public_;
   users: typeof users;
 }>;
 
