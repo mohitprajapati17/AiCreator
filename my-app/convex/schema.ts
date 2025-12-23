@@ -51,7 +51,7 @@ export default defineSchema({
 
     // Comments system
     comments:defineTable({
-        postId:v.id("post"),
+        postId:v.id("posts"),
         authorId:v.optional(v.id("users")),
         authorName:v.string(),
         authorEmail:v.optional(v.string()),
