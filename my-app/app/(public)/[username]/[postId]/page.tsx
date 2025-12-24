@@ -1,3 +1,4 @@
+"use client"
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs"
 import { useConvexQuery,useConvexMutation } from '@/hooks/use-convex-query';
@@ -23,7 +24,7 @@ import Link from "next/link";
 import PublicHeader from "../_components/publicHeader";
 import Image from "next/image";
 
-const PostPage=()=>{
+ const PostPage=()=>{
       const params = useParams();
     const username = params.username as string;
     const postId = params.postId as string;
@@ -117,7 +118,7 @@ const PostPage=()=>{
         try {
             await addComment({
                 postId,
-                content: commentContent.trim(),
+                comment: commentContent.trim(),
             });
             setCommentContent("");
             toast.success("Comment added!");
@@ -209,7 +210,7 @@ return (
 
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag) => (
+                {post.tags.map((tag:any) => (
                   <Badge
                     key={tag}
                     variant="secondary"
@@ -304,7 +305,7 @@ return (
             <BarLoader width={"100%"} color="#D8B4FE" />
           ) : comments && comments.length > 0 ? (
             <div className="space-y-4">
-              {comments.map((comment) => (
+              {comments.map((comment:any) => (
                 <Card key={comment._id} className="card-glass">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-3">
@@ -454,6 +455,8 @@ return (
     </div>
   );
 };
+
+export default PostPage
 
 
 
