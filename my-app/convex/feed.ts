@@ -9,8 +9,10 @@ export const getFeed=query({
 
         const allPosts=await ctx.db.query("posts").filter((q)=>q.eq(q.field("status"),"published")).order("desc").take(limit+1);
 
-        const  hasmore=false;
+        const  hasMore=allPosts.length>limit;
 
+        const feedPosts=hasMore?allPosts.slice(0,limit):allPosts;
+        
     }
 })
 
