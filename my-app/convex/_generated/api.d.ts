@@ -9,6 +9,7 @@
  */
 
 import type * as comment from "../comment.js";
+import type * as feed from "../feed.js";
 import type * as follow from "../follow.js";
 import type * as likes from "../likes.js";
 import type * as post from "../post.js";
@@ -23,6 +24,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   comment: typeof comment;
+  feed: typeof feed;
   follow: typeof follow;
   likes: typeof likes;
   post: typeof post;
