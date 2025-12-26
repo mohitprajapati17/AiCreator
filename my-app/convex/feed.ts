@@ -152,3 +152,51 @@ export const getSuggestedUsers = query({
 
 
 
+// Get trending posts (high engagement in last 7 days)
+export const getTrendingPosts = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+    // Get recent published posts
+    const recentPosts = await ctx.db
+      .query("posts")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "published"),
+          q.gte(q.field("publishedAt"), weekAgo)
+        )
+      )
+      .collect();
+
+    // Calculate trending score and sort
+    const trendingPosts = recentPosts
+      .map((post) => ({
+        ...post,
+        trendingScore: post.viewCount + post.likeCount * 3,
+      }))
+      .sort((a, b) => b.trendingScore - a.trendingScore)
+      .slice(0, limit);
+
+    // Add author information
+    const postsWithAuthors = await Promise.all(
+      trendingPosts.map(async (post) => {
+        const author = await ctx.db.get(post.authorId);
+        return {
+          ...post,
+          author: author
+            ? {
+                _id: author._id,
+                name: author.name,
+                username: author.username,
+                imageUrl: author.imageUrl,
+              }
+            : null,
+        };
+      })
+    );
+
+    return postsWithAuthors.filter((post) => post.author !== null);
+  },
+});
