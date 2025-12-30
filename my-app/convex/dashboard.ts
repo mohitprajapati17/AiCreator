@@ -175,6 +175,8 @@ export const getPostsWithAnalytics=query({
         const identity=await ctx.auth.getUserIdentity();
 
         const  user  =await ctx.db.query("users").filter((q) => q.eq(q.field("tokenIdentifier"), identity?.tokenIdentifier)).unique();
-        
+        if(!user) return null;
+
+        const posts=await ctx.db.query("posts")
     }
 })
