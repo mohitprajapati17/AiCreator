@@ -69,7 +69,7 @@ export  const getAnalytics=query({
 });
 
 // Get recent activity for the dashboard
-export  const  getRecetnActivity=query({
+export  const  getRecentActivity=query({
     args:{limit :v.optional(v.number())},
     handler:async(ctx ,  args)=>{
 
