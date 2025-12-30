@@ -140,7 +140,32 @@ export  const  getRecetnActivity=query({
                 }
             }
 
+            // Get recent followers
+        const recentFollowers = await ctx.db
+        .query("follows")
+        .filter((q) => q.eq(q.field("followingId"), user._id))
+        .order("desc")
+        .take(5);
+
+        for (const follow of recentFollowers) {
+        const follower = await ctx.db.get(follow.followerId);
+        if (follower) {
+            activity.push({
+            type: "follow",
+            user: follower.name,
+            time: follow.createdAt,
+            });
+        }
+        }
+
+        // Sort all activities by time and limit
+        activity.sort((a, b) => b.time - a.time);
+
+        return activity.slice(0, args.limit || 10);
+
 
 
     }
 })
+
+// Get posts with analytics for dashboard
