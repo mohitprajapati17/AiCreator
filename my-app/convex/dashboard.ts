@@ -177,6 +177,105 @@ export const getPostsWithAnalytics=query({
         const  user  =await ctx.db.query("users").filter((q) => q.eq(q.field("tokenIdentifier"), identity?.tokenIdentifier)).unique();
         if(!user) return null;
 
-        const posts=await ctx.db.query("posts")
+        // Get recent posts with enhanced data
+        const posts = await ctx.db
+            .query("posts")
+            .filter((q) => q.eq(q.field("authorId"), user._id))
+            .order("desc")
+            .take(args.limit || 5);
+
+        
+        // Add comment counts to each post
+        const postsWithComments = await Promise.all(
+        posts.map(async (post) => {
+            const comments = await ctx.db
+            .query("comments")
+            .filter((q) =>
+                q.and(
+                q.eq(q.field("postId"), post._id),
+                q.eq(q.field("status"), "approved")
+                )
+            )
+            .collect();
+
+            return {
+            ...post,
+            commentCount: comments.length,
+            };
+        })
+        );
+
+        return postsWithComments;
+
     }
 })
+
+// Get daily views data for chart (last 30 days) - Assignment
+// Get daily views data for chart (last 30 days) - Assignment
+export const getDailyViews = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("tokenIdentifier"), identity.tokenIdentifier))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get user's posts
+    const userPosts = await ctx.db
+      .query("posts")
+      .filter((q) => q.eq(q.field("authorId"), user._id))
+      .collect();
+
+    const postIds = userPosts.map((post) => post._id);
+
+    // Generate last 30 days
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateString = date.toISOString().split("T")[0]; // YYYY-MM-DD
+      days.push({
+        date: dateString,
+        views: 0,
+        day: date.toLocaleDateString("en-US", { weekday: "short" }),
+        fullDate: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+      });
+    }
+
+    // Get daily stats for all user's posts
+    const dailyStats = await ctx.db
+      .query("dailyStats")
+      .filter((q) => q.or(...postIds.map((id) => q.eq(q.field("postId"), id))))
+      .collect();
+
+    // Aggregate views by date
+    const viewsByDate: Record<string, number> = {};
+    dailyStats.forEach((stat) => {
+      if (viewsByDate[stat.date]) {
+        viewsByDate[stat.date] += stat.views;
+      } else {
+        viewsByDate[stat.date] = stat.views;
+      }
+    });
+
+    // Merge with days array
+    const chartData = days.map((day) => ({
+      ...day,
+      views: viewsByDate[day.date] || 0,
+    }));
+
+    return chartData;
+  },
+});
