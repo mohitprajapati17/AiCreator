@@ -1,5 +1,5 @@
 // // Get dashboard analytics for the authenticated user
-import { v } from "convex/values";
+import { convexToJson, v } from "convex/values";
 import { query } from "./_generated/server";
 
 export  const getAnalytics=query({
@@ -169,3 +169,12 @@ export  const  getRecetnActivity=query({
 })
 
 // Get posts with analytics for dashboard
+export const getPostsWithAnalytics=query({
+    args:{limit:v.optional(v.number())},
+    handler:async(ctx , args)=>{
+        const identity=await ctx.auth.getUserIdentity();
+
+        const  user  =await ctx.db.query("users").filter((q) => q.eq(q.field("tokenIdentifier"), identity?.tokenIdentifier)).unique();
+        
+    }
+})
