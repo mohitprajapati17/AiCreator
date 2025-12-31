@@ -50,7 +50,8 @@ function page() {
 
   const  posts=postData?.posts||[];
   
-  const isOwnProfile=currentUser && currentUser.publicMetadata?.username === user.username;
+  const isOwnProfile=currentUser && currentUser.fullName === user.name;
+  console.log(isOwnProfile)
 
   const handleFollowToggle=async()=>{
     if(!currentUser){
