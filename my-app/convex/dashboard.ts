@@ -1,4 +1,3 @@
-// // Get dashboard analytics for the authenticated user
 import { convexToJson, v } from "convex/values";
 import { query } from "./_generated/server";
 
