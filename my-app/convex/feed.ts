@@ -40,7 +40,6 @@ export const getFeed=query({
 
 
 
-// Get suggested users to follow
 export const getSuggestedUsers = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
